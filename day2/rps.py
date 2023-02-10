@@ -10,16 +10,20 @@ scissors = 3
 shapesMap = {
     'A': rock,
     'B': paper,
-    'C': scissors,
-    'X': rock,
-    'Y': paper,
-    'Z': scissors
+    'C': scissors
 }
 
 # outcome scores
 loss = 0
 draw = 3
 win = 6
+
+# outcome conversions
+outcomesMap = {
+    'X': loss,
+    'Y': draw,
+    'Z': win
+}
 
 # my score
 totalScore = 0
@@ -34,28 +38,40 @@ while(True):
         break
 
     # do calculations
-    shapes = line.strip().split(' ')
-    opponentShapeScore = shapesMap[shapes[0]]
-    myShapeScore = shapesMap[shapes[1]]
+    guideValues = line.strip().split(' ')
+    inputShapeScore = shapesMap[guideValues[0]]
+    outcomeScore = outcomesMap[guideValues[1]]
 
-    # add shape score to total score
-    totalScore += myShapeScore
+    # add outcome score to total score
+    totalScore += outcomeScore
 
-    if opponentShapeScore == myShapeScore:
-        # draw
-        totalScore += draw
-    elif myShapeScore == paper and opponentShapeScore == rock:
-        # win: paper beats rock
-        totalScore += win
-    elif myShapeScore == scissors and opponentShapeScore == paper:
-        # win: scissors beat paper
-        totalScore += win
-    elif myShapeScore == rock and opponentShapeScore == scissors:
-        # win: rock beats scissors
-        totalScore += win
-    else:
-        # loss
-        totalScore += loss
+    if outcomeScore == draw:
+        # add input shape score in case of draw (same shapes)
+        totalScore += inputShapeScore
+    elif inputShapeScore == rock:
+        # if input shape is rock...
+        if outcomeScore == win:
+            # throw paper to win
+            totalScore += paper
+        else:
+            # throw scissors to lose
+            totalScore += scissors
+    elif inputShapeScore == paper:
+        # if input shape is paper...
+        if outcomeScore == win:
+            # throw scissors to win
+            totalScore += scissors
+        else:
+            # throw rock to lose
+            totalScore += rock
+    elif inputShapeScore == scissors:
+        # if input shape is scissors...
+        if outcomeScore == win:
+            # throw rock to win
+            totalScore += rock
+        else:
+            # throw paper to lose
+            totalScore += paper
 
 print("--RESULT--")
 print(totalScore)
