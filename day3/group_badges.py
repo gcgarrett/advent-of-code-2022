@@ -60,6 +60,8 @@ priorities = (
     'Z'
 )
 
+# rucksacks group
+rucksackGroup = []
 # sum of priorities
 sumOfPriorities = 0
 
@@ -68,29 +70,25 @@ while(True):
     # read next line
     line = f.readline()
 
+    # if we have all of the rucksacks for the group...
+    if len(rucksackGroup) == 3:
+        for item in rucksackGroup[0]:
+            # check if item is in the other rucksacks
+            if item in rucksackGroup[1] and item in rucksackGroup[2]:
+                # add item priority to the sum
+                sumOfPriorities += priorities.index(item)
+                break
+        # clear rucksacks from the list to start next group
+        rucksackGroup.clear()
+
     # EOF, break out of the loop
     if line == "":
         break
 
-    # split rucksack items into compartments
-    rucksackItems = list(line.strip())
-    itemCount = len(rucksackItems)
-    # find midpoint in rucksack
-    splitOn = itemCount // 2
-
-    # create sets of the items in the two compartments, that way the items we
-    # iterate over are unique
-
-    # create a set of items in the first compartment
-    compartmentA = set(rucksackItems[:splitOn])
-    # create a set of items in the second compartment
-    compartmentB = set(rucksackItems[splitOn:])
-
-    # find duplicate
-    for item in compartmentA:
-        if item in compartmentB:
-            # add item priority to the sum
-            sumOfPriorities += priorities.index(item)
+    # create set of unique items in the rucksack
+    rucksackItems = set(line.strip())
+    # add rucksack to the group
+    rucksackGroup.append(rucksackItems)
 
 print("Sum of priorities")
 print(sumOfPriorities)
