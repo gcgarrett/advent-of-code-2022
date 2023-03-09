@@ -19,7 +19,7 @@ while(start < len(line) - 4):
     end = start + 4
 
     if isMarker(line[start:end]):
-        print("Marker start")
+        print("Packet start")
         print(str(end))
         break
     else:
