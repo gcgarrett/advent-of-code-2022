@@ -1,8 +1,19 @@
+import sys, getopt
+
 # open the file with the puzzle input
 f = open('./puzzle_input.txt')
 
-# specify the marker length
-MARKER_LEN = 14
+# the default marker length
+MARKER_LEN = 4
+
+# reads options from the command line
+# you have to slice off the file name ¯\_(ツ)_/¯
+opts, args = getopt.getopt(sys.argv[1:], "l:", ["length="])
+
+for opt, arg in opts:
+    if opt in ("-l", "--length"):
+        # set marker length
+        MARKER_LEN = int(arg)
 
 # there's only one line in the puzzle input file
 line = f.readline()
