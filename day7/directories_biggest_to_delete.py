@@ -1,47 +1,59 @@
-# import the Directory and File classes from directories
+# import the Directory and File classes and findDirectory method from
+# directories
 from directories import *
 
 # open the puzzle input file
 f = open('./puzzle_input.txt')
 
+# total disk space available, 70,000,000
+TOTAL_DISK_SPACE = 70000000
+# free disk space required to do upgrade, 30,000,000
+UPGRADE_FREE_SPACE = 30000000
 # keep track of the path we traverse
 path = []
 # create the root directory, which is at "/"
 root = Directory("root")
 # global reference to the current directory
 currentDirectory = root
-# sum of the total sizes of directories with total size at most 100,000
-totalSum = 0
 
-# helper method to sum the sizes of for a given directory. because a
-# directory's size includes the sizes of all its descendant directories this
-# will call this function on all of the given directory's children recursively.
+# helper method to find the size of a given directory. because a directory's
+# size includes the sizes of all its descendant directories this will call this
+# function on all of the given directory's children recursively.
 # parameters
 #   node (Directory): the current directory in the tree
 # returns
 #   (Integer):        the total size of the directory
-# notes
-#   also add the sum to the global totalSum value if the sum is at most 100,000
-def sumSizes(node):
-    # modify global copy of totalSum
-    global totalSum
+def size(node):
     sum = 0
 
     # sum sizes of all descendants of this directory
     for child in node.children:
-        sum = sum + sumSizes(child)
+        sum = sum + size(child)
 
     # sum size of all files of this directory
     for fi in node.files:
         sum = sum + fi.size
-
-    print("Directory '" + node.name + "' sum is " + str(sum))
-
-    # add sum to global totalSum if value is at most 100,000
-    if sum <= 100000:
-        totalSum = totalSum + sum
     
     return sum
+
+# helper method to collect the size of the given directory and all of its
+# children.
+# parameters
+#   node (Directory): the current directory in the tree
+# returns
+#   (List):           the list of directory sizes
+def collectSizes(node, sizes = []):
+    # calculate size of directory
+    nodeSize = size(node)
+
+    # add size to result
+    sizes.append(nodeSize)
+
+    # loop through children and run this function on each of them
+    for child in node.children:
+        collectSizes(child, sizes)
+
+    return sizes
 
 # loop through the input file
 while(True):
@@ -91,8 +103,22 @@ while(True):
         newFile = File(tokens[1], int(tokens[0]))
         currentDirectory.addFile(newFile)
         
+# calculate the used space on the disk (e.g. the root node size)
+usedSpace = size(root)
+# calculate the unused space on the disk
+unusedSpace = TOTAL_DISK_SPACE - usedSpace
+# calculate minimum we need to delete to upgrade
+threshold = UPGRADE_FREE_SPACE - unusedSpace
+# collect the directory sizes
+directorySizes = collectSizes(root)
+# set smallest value to maximum (TOTAL_DISK_SPACE)
+smallest = TOTAL_DISK_SPACE
 
-sumSizes(root)
+for directorySize in directorySizes:
+    # if directory size is greater than or equal to the threshold and it is
+    # less than the smallest value, use it for the smallest value
+    if directorySize >= threshold and directorySize < smallest:
+        smallest = directorySize
 
-print("--Total sum of directory sizes at most 100,000--")
-print(totalSum)
+print("Smallest size to free up space")
+print(smallest)
