@@ -1,8 +1,9 @@
+import getopt
 import logging
-import math
 import re
+import sys
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 # open the puzzle input file
 f = open('./puzzle_input.txt')
@@ -39,6 +40,29 @@ class Monkey:
             return self.items.pop(0)
     def inspectItem(self):
         self.inspectedItems += 1
+
+# the number of rounds to run
+ROUNDS = 20
+# are we dividing the worry level, e.g. we are relieved when a monkey throws
+# an item
+DIV_WORRY_LEVEL = True
+# what we should divide the worry level by (or modulo by, in the case where we
+# have thousands of rounds)
+WORRY_LEVEL_DIVISOR = 3
+
+# command line arguments
+#   -r, --rounds: the number of rounds to run
+#   -n, --no-div: don't divide the item's worry level by 3 after each round
+opts, args = getopt.getopt(sys.argv[1:], 'r:n', ['rounds=', 'no-div'])
+
+for opt, arg in opts:
+    if opt in ('-r', '--rounds'):
+        ROUNDS = int(arg)
+    elif opt in ('-n', '--no-div'):
+        DIV_WORRY_LEVEL = False
+
+logging.debug(f'Rounds: {ROUNDS}')
+logging.debug(f'Divide the worry level: {DIV_WORRY_LEVEL}')
 
 # list of the monkeys
 monkeys = []
@@ -109,14 +133,29 @@ while(True):
     if match:
         falseMonkey = int(match.group(1))
 
-# run 20 rounds
-for r in range(20):
-    logging.debug(f'Round: {r}')
+if not DIV_WORRY_LEVEL:
+    # if we are not experiencing relief when a monkey throws an item, that is,
+    # dividing the worry level of an item every round, then we need to modulo
+    # the worry level of the item so the number isn't astronomical. I was
+    # running into errors debugging the code because the worry level numbers
+    # exceeded 4300 digits! Since all of the test divisors are prime numbers,
+    # we can take the modulo of the worry level of an item with the product of
+    # these prime numbers and still obtain valid test results for which monkey
+    # to throw to. Thus we are using the Chinese remainder theorem to ensure
+    # our worry level does not go through the roof.
+    WORRY_LEVEL_DIVISOR = 1
     for monkey in monkeys:
-        logging.debug(monkey)
+        WORRY_LEVEL_DIVISOR = WORRY_LEVEL_DIVISOR * monkey.testAmt
+
+logging.debug(f'Worry level divisor: {WORRY_LEVEL_DIVISOR}')
+
+# run all of the rounds
+for r in range(ROUNDS):
+    logging.info(f'Round: {r}')
 
     # loop through all of the monkeys
     for monkey in monkeys:
+        logging.debug(monkey)
         item = monkey.getItem()
 
         # loop until there are no more items for the monkey
@@ -133,13 +172,22 @@ for r in range(20):
                 # isn't
                 amount = int(amount)
 
-            if monkey.op == '+':
-                worryLevel += amount
-            elif monkey.op == '*':
-                worryLevel *= amount
+            logging.debug(f'Worry level: {worryLevel}; Amount: {amount}; Operation: {monkey.op}')
 
-            # divide the worry level by 3, getting the floor of the result
-            worryLevel = int(math.floor(float(worryLevel) / 3))
+            if monkey.op == '+':
+                worryLevel = worryLevel + amount
+            elif monkey.op == '*':
+                worryLevel = worryLevel * amount
+
+            if DIV_WORRY_LEVEL:
+                # divide the worry level by the worry level divisor, getting
+                # the floor of the result
+                worryLevel = worryLevel // WORRY_LEVEL_DIVISOR
+            else:
+                # modulo the worry level by the worry level divisor so our
+                # worry level doesn't grow to huge numbers (e.g. over 4300
+                # digits)
+                worryLevel = worryLevel % WORRY_LEVEL_DIVISOR
 
             # update the item's worry level
             item.setWorryLevel(worryLevel)
