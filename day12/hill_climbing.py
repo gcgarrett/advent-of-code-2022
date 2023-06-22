@@ -3,7 +3,7 @@ import logging
 import sys
 
 # configure the logging level
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 START_ELEVATIONS = ['S']
 
