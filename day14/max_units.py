@@ -1,7 +1,21 @@
+import getopt
 import logging
+import sys
 
 # configure the logging level
 logging.basicConfig(level=logging.INFO)
+
+HAS_FLOOR = False
+MAX_X = 1000
+SAND_SOURCE = (500, 0)
+
+# command line arguments
+#   -f, --floor: configures the cave to include a floor
+opts, args = getopt.getopt(sys.argv[1:], 'f', ['floor'])
+
+for opt, arg in opts:
+    if opt in ('-f', '--floor'):
+        HAS_FLOOR = True
 
 # open the puzzle input file
 f = open('./puzzle_input.txt')
@@ -17,10 +31,7 @@ class Line:
     def __str__(self):
         return f'{self.start} -> {self.end}'
 
-# figure out what the minimum X, maximum X, and maximum Y coordinates are
-minX = 1000
-maxX = 0
-minY = 0 # we know the sand falls from 500,0
+# figure out what the maximum Y coordinates are
 maxY = 0
 
 # parse the puzzle input
@@ -34,7 +45,6 @@ while(True):
 
     # get the list of coordinates on the input line
     coordinates = line.strip().split(' -> ')
-    logging.debug(coordinates)
 
     prevCoordinates = None
 
@@ -44,14 +54,6 @@ while(True):
         points = tuple(map(int, coordinate.split(',')))
         pointX = points[0]
         pointY = points[1]
-
-        if pointX > maxX:
-            # set new maximum x-coordinate
-            maxX = pointX
-
-        if pointX < minX:
-            # set new minimum x-coordinate
-            minX = pointX
 
         if pointY > maxY:
             # set new maximum y-coordinate
@@ -65,14 +67,21 @@ while(True):
 
         prevCoordinates = currentCoordinates
 
-logging.debug(f'minX: {minX}; maxX: {maxX}; minY: {minY}; maxY: {maxY}')
+logging.debug(f'maxY: {maxY}')
+
+if HAS_FLOOR:
+    # if the cave has a floor, add two to the maximum y-coordinate and add a
+    # horizontal line to represent the cave floor
+    maxY += 2
+    lines.append(Line((0, maxY), (MAX_X, maxY)))
 
 # create a grid of empty spaces (represented by '.') to fill in the rows and
-# columns
-grid = [['.' for x in range((maxX - minX) + 1)] for y in range((maxY - minY) + 1)]
+# columns; add 1 as the coordinates are 0-based (e.g. if maxY is 9, then we
+# require 10 rows to include the zeroth row along with 1 through 9).
+grid = [['.' for x in range(MAX_X + 1)] for y in range(maxY + 1)]
 
 # signify the sand source with the '+' character
-grid[0][500 - minX] = '+'
+grid[SAND_SOURCE[1]][SAND_SOURCE[0]] = '+'
 
 # loop through the lines to add the rock lines to the grid
 for l in lines:
@@ -93,11 +102,6 @@ for l in lines:
         startY = end[1]
         endY = start[1]
 
-    # treat minX as 0 in our grid, so subtract minX from the start and end
-    # x-coordinates
-    startX = startX - minX
-    endX = endX - minX
-
     logging.debug(f'startX: {startX}; startY: {startY}; endX: {endX}; endY: {endY}')
 
     if startX != endX:
@@ -114,7 +118,7 @@ for l in lines:
 # prints the initial cave state with rock structures
 print('Initial state')
 for row in grid:
-    print(' '.join(row))
+    print(''.join(row))
 
 # method to validate that the given coordinate is empty. An empty space is
 # indicated by a '.' character.
@@ -135,8 +139,8 @@ sandCount = 0
 while sandFalling:
     # sand falls from coordinate 500,0, but we are truncating the space to
     # start with minX as 0, so all x-coordinates need to subtract minX
-    x = 500 - minX
-    y = 0
+    x = SAND_SOURCE[0]
+    y = SAND_SOURCE[1]
 
     while(True):
         try:
@@ -155,6 +159,10 @@ while sandFalling:
             else:
                 grid[y][x] = 'o'
                 sandCount += 1
+                if HAS_FLOOR and x == SAND_SOURCE[0] and y == SAND_SOURCE[1]:
+                    # if the cave has a floor, then we have filled up the cave
+                    # to the sand source
+                    sandFalling = False
                 break
         except IndexError:
             # the grain of sand has fallen into the void
@@ -164,6 +172,6 @@ while sandFalling:
 # prints the resulting cave state with sand and rock structures
 print('Resulting state')
 for row in grid:
-    print(' '.join(row))
+    print(''.join(row))
 
 logging.info(f'Sand units: {sandCount}')
